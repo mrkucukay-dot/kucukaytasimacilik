@@ -1,0 +1,609 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UCarbon Transport | Karbon Hesaplama</title>
+<style>
+:root {
+  --green: #167d58;
+  --dark: #16372e;
+  --bg: #f4f7f5;
+  --line: #dfe8e2;
+  --muted: #65756d;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: #20352c;
+}
+header {
+  background: var(--dark);
+  color: white;
+  padding: 24px 5%;
+}
+.brand { font-size: 24px; font-weight: 800; }
+.brand span { color: #72d5a6; }
+header p { color: #d0e3d9; margin-bottom: 0; }
+main { max-width: 1250px; margin: 26px auto; padding: 0 18px; }
+h2 { font-size: 19px; margin-top: 0; }
+.card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 18px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 13px;
+}
+label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+input, select {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid #ccd9d1;
+  border-radius: 8px;
+  background: white;
+  color: #20352c;
+}
+input:focus, select:focus { outline: 2px solid #a3ddbd; }
+button {
+  border: 0;
+  border-radius: 8px;
+  padding: 11px 15px;
+  cursor: pointer;
+  font-weight: 700;
+}
+.primary { background: var(--green); color: white; }
+.secondary { background: #eaf3ed; color: var(--dark); }
+.danger { background: #fff0ef; color: #a33131; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.metric {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+}
+.metric small { color: var(--muted); }
+.metric strong { display: block; font-size: 25px; margin-top: 8px; }
+table { width: 100%; border-collapse: collapse; }
+th, td {
+  text-align: left;
+  padding: 12px 9px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+th { background: #f5f8f6; color: #4b6256; }
+.table-wrap { overflow-x: auto; }
+.status {
+  display: inline-block;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: #fff4d9;
+  color: #815d00;
+  font-size: 11px;
+  font-weight: 700;
+}
+.notice {
+  padding: 12px 14px;
+  background: #fff8e7;
+  border: 1px solid #f0dfae;
+  border-radius: 8px;
+  color: #6f5516;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.muted { color: var(--muted); font-size: 12px; line-height: 1.5; }
+footer { text-align: center; padding: 25px; color: var(--muted); font-size: 12px; }
+@media(max-width:800px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metrics { grid-template-columns: 1fr; }
+}
+@media(max-width:480px) {
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">UCarbon <span>Transport</span></div>
+  <p>Taşımacılık zinciri sera gazı emisyon hesaplama prototipi</p>
+</header>
+
+<main>
+  <div class="notice">
+    <strong>Prototip uyarısı:</strong> Bu uygulama ön değerlendirme ve yazılım testi içindir.
+    Faktörlerin kaynakları, lisansları, kapsamları ve metodolojik uygunluğu doğrulanmadan
+    sonuçlar resmî ISO 14083 uyumlu rapor olarak kullanılmamalıdır.
+  </div>
+
+  <section class="card">
+    <h2>1. Sevkiyat bilgileri</h2>
+    <div class="grid">
+      <div>
+        <label for="shipmentId">Sevkiyat numarası</label>
+        <input id="shipmentId" value="SHIP-2026-0001">
+      </div>
+      <div>
+        <label for="cargoName">Yük / ürün</label>
+        <input id="cargoName" placeholder="Örn. yedek parça">
+      </div>
+      <div>
+        <label for="reportDate">Hesaplama tarihi</label>
+        <input id="reportDate" type="date">
+      </div>
+      <div>
+        <label for="company">Firma / birim</label>
+        <input id="company" placeholder="Firma adı">
+      </div>
+    </div>
+  </section>
+
+  <section class="metrics">
+    <div class="metric">
+      <small>Toplam emisyon</small>
+      <strong id="totalEmissions">0 kg</strong>
+    </div>
+    <div class="metric">
+      <small>Toplam taşıma aktivitesi</small>
+      <strong id="totalTkm">0 tkm</strong>
+    </div>
+    <div class="metric">
+      <small>Taşıma bacağı sayısı</small>
+      <strong id="legCount">0</strong>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2. Taşıma bacağı ekle</h2>
+    <div class="grid">
+      <div>
+        <label for="mode">Taşıma modu</label>
+        <select id="mode">
+          <option value="road">Karayolu</option>
+          <option value="rail">Demiryolu</option>
+          <option value="sea">Denizyolu</option>
+          <option value="inland_waterway">İç suyolu</option>
+          <option value="air">Havayolu</option>
+          <option value="pipeline">Boru hattı</option>
+          <option value="other">Diğer</option>
+        </select>
+      </div>
+      <div>
+        <label for="origin">Çıkış noktası</label>
+        <input id="origin" placeholder="Örn. Ankara">
+      </div>
+      <div>
+        <label for="destination">Varış noktası</label>
+        <input id="destination" placeholder="Örn. İstanbul">
+      </div>
+      <div>
+        <label for="mass">Taşınan yük (ton)</label>
+        <input id="mass" type="number" min="0.001" step="any" placeholder="10">
+      </div>
+      <div>
+        <label for="distance">Mesafe (km)</label>
+        <input id="distance" type="number" min="0.001" step="any" placeholder="450">
+      </div>
+      <div>
+        <label for="distanceSource">Mesafe kaynağı</label>
+        <select id="distanceSource">
+          <option value="user_input">Manuel giriş</option>
+          <option value="carrier_report">Taşıyıcı beyanı</option>
+          <option value="document">Taşıma belgesi</option>
+          <option value="gps_telematics">GPS / telematik</option>
+          <option value="routing_api">Rota servisi</option>
+        </select>
+      </div>
+      <div>
+        <label for="distanceType">Mesafe niteliği</label>
+        <select id="distanceType">
+          <option value="actual">Gerçekleşen</option>
+          <option value="planned">Planlanan</option>
+          <option value="estimated">Tahmini</option>
+        </select>
+      </div>
+      <div>
+        <label for="factor">Emisyon faktörü</label>
+        <select id="factor">
+          <option value="air_short">GLEC örneği — kargo uçağı, kısa mesafe</option>
+          <option value="air_long">GLEC örneği — kargo uçağı, uzun mesafe</option>
+          <option value="custom">Kendi faktörümü gireceğim</option>
+        </select>
+      </div>
+      <div>
+        <label for="factorValue">Faktör (g CO₂e/ton-km)</label>
+        <input id="factorValue" type="number" min="0" step="any" value="1516">
+      </div>
+      <div>
+        <label for="boundary">Emisyon sınırı</label>
+        <select id="boundary">
+          <option value="WTW">WTW — toplam</option>
+          <option value="TTW">TTW — operasyon</option>
+          <option value="WTT">WTT — enerji tedariki</option>
+        </select>
+      </div>
+      <div>
+        <label for="factorSource">Faktör kaynağı / referansı</label>
+        <input id="factorSource" value="GLEC Framework v3.2, Tablo 1">
+      </div>
+      <div>
+        <label for="factorStatus">Faktör doğrulama durumu</label>
+        <select id="factorStatus">
+          <option value="review">İnceleme gerekli</option>
+          <option value="approved">Kurum içinde onaylandı</option>
+          <option value="custom">Kullanıcı tarafından girildi</option>
+        </select>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="primary" onclick="addLeg()">+ Taşıma bacağını ekle</button>
+      <button class="secondary" onclick="saveData()">Tarayıcıya kaydet</button>
+      <button class="secondary" onclick="loadData()">Kayıtlı veriyi yükle</button>
+    </div>
+    <p class="muted">
+      Hesaplama formülü: Yük (ton) × Mesafe (km) × Faktör (g CO₂e/ton-km) ÷ 1.000
+      = Emisyon (kg CO₂e).
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>3. Taşıma zinciri ve hesaplama sonuçları</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Bacak / rota</th>
+            <th>Mod</th>
+            <th>Yük (ton)</th>
+            <th>Mesafe (km)</th>
+            <th>Aktivite (tkm)</th>
+            <th>Faktör</th>
+            <th>Emisyon (kg CO₂e)</th>
+            <th>Durum</th>
+            <th>İşlem</th>
+          </tr>
+        </thead>
+        <tbody id="legsTable">
+          <tr><td colspan="9">Henüz taşıma bacağı eklenmedi.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="actions">
+      <button class="secondary" onclick="exportJSON()">JSON dışa aktar</button>
+      <button class="secondary" onclick="exportCSV()">CSV dışa aktar</button>
+      <button class="danger" onclick="clearLegs()">Tüm bacakları sil</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>4. Faktör kütüphanesi — prototip</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Faktör kodu</th>
+            <th>Tanım</th>
+            <th>Değer</th>
+            <th>Birim</th>
+            <th>Sınır</th>
+            <th>Durum</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>GLEC32-AIR-SHORT</td>
+            <td>Kargo uçağı, 1.500 km altı</td>
+            <td>1.516</td>
+            <td>g CO₂e/tkm</td>
+            <td>WTW</td>
+            <td><span class="status">İnceleme gerekli</span></td>
+          </tr>
+          <tr>
+            <td>GLEC32-AIR-LONG</td>
+            <td>Kargo uçağı, 1.500 km üstü</td>
+            <td>608</td>
+            <td>g CO₂e/tkm</td>
+            <td>WTW</td>
+            <td><span class="status">İnceleme gerekli</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">
+      Bu sürümde yalnızca iki örnek havayolu faktörü ön tanımlıdır.
+      Diğer taşıma modları için uygun faktörün doğrulanarak girilmesi gerekir.
+      Faktör değerleri otomatik olarak onaylı kabul edilmez.
+    </p>
+  </section>
+</main>
+
+<footer>UCarbon Transport · Bağımsız prototip · Metodoloji ve faktör doğrulaması gereklidir</footer>
+
+<script>
+const FACTORS = {
+  air_short: {
+    value: 1516,
+    source: "GLEC Framework v3.2, Tablo 1",
+    boundary: "WTW",
+    status: "review",
+    label: "Kargo uçağı — kısa mesafe"
+  },
+  air_long: {
+    value: 608,
+    source: "GLEC Framework v3.2, Tablo 1",
+    boundary: "WTW",
+    status: "review",
+    label: "Kargo uçağı — uzun mesafe"
+  }
+};
+
+let legs = [];
+
+const $ = id => document.getElementById(id);
+
+$("reportDate").value = new Date().toISOString().slice(0, 10);
+
+$("factor").addEventListener("change", function () {
+  const f = FACTORS[this.value];
+  if (f) {
+    $("factorValue").value = f.value;
+    $("factorSource").value = f.source;
+    $("boundary").value = f.boundary;
+    $("factorStatus").value = f.status;
+  } else {
+    $("factorValue").value = "";
+    $("factorSource").value = "";
+    $("factorStatus").value = "custom";
+  }
+});
+
+function addLeg() {
+  const mass = Number($("mass").value);
+  const distance = Number($("distance").value);
+  const factor = Number($("factorValue").value);
+
+  if (!Number.isFinite(mass) || mass <= 0) {
+    alert("Yük miktarını ton cinsinden, sıfırdan büyük gir.");
+    return;
+  }
+  if (!Number.isFinite(distance) || distance <= 0) {
+    alert("Mesafeyi kilometre cinsinden, sıfırdan büyük gir.");
+    return;
+  }
+  if (!Number.isFinite(factor) || factor < 0) {
+    alert("Geçerli bir emisyon faktörü gir.");
+    return;
+  }
+  if (!$("factorSource").value.trim()) {
+    alert("Faktörün kaynağını veya referansını gir.");
+    return;
+  }
+
+  const modeLabels = {
+    road: "Karayolu",
+    rail: "Demiryolu",
+    sea: "Denizyolu",
+    inland_waterway: "İç suyolu",
+    air: "Havayolu",
+    pipeline: "Boru hattı",
+    other: "Diğer"
+  };
+
+  const id = "LEG-" + String(legs.length + 1).padStart(3, "0");
+  const tonneKm = mass * distance;
+  const emissionsKg = tonneKm * factor / 1000;
+  const status = $("factorStatus").value;
+
+  legs.push({
+    legId: id,
+    shipmentId: $("shipmentId").value.trim(),
+    cargoName: $("cargoName").value.trim(),
+    mode: $("mode").value,
+    modeLabel: modeLabels[$("mode").value],
+    origin: $("origin").value.trim(),
+    destination: $("destination").value.trim(),
+    cargoMassTonnes: mass,
+    distanceKm: distance,
+    distanceSource: $("distanceSource").value,
+    distanceType: $("distanceType").value,
+    factorValue: factor,
+    factorUnit: "gCO2e/tkm",
+    factorSource: $("factorSource").value.trim(),
+    boundary: $("boundary").value,
+    factorStatus: status,
+    tonneKm,
+    emissionsKgCO2e: emissionsKg,
+    recordedAt: new Date().toISOString()
+  });
+
+  render();
+}
+
+function render() {
+  const tbody = $("legsTable");
+
+  if (!legs.length) {
+    tbody.innerHTML =
+      '<tr><td colspan="9">Henüz taşıma bacağı eklenmedi.</td></tr>';
+  } else {
+    tbody.innerHTML = legs.map((leg, index) => {
+      const route = escapeHTML(leg.origin || "Başlangıç belirtilmedi") +
+        " → " +
+        escapeHTML(leg.destination || "Varış belirtilmedi");
+
+      const statusLabel = leg.factorStatus === "approved"
+        ? "Kurum içi onay"
+        : leg.factorStatus === "custom"
+          ? "Kullanıcı faktörü"
+          : "İnceleme gerekli";
+
+      return `<tr>
+        <td>${route}<br><span class="muted">${leg.legId}</span></td>
+        <td>${escapeHTML(leg.modeLabel)}</td>
+        <td>${fmt(leg.cargoMassTonnes)}</td>
+        <td>${fmt(leg.distanceKm)}</td>
+        <td>${fmt(leg.tonneKm)}</td>
+        <td>${fmt(leg.factorValue)}<br><span class="muted">${leg.boundary}</span></td>
+        <td><strong>${fmt(leg.emissionsKgCO2e)}</strong></td>
+        <td><span class="status">${statusLabel}</span></td>
+        <td><button class="danger" onclick="removeLeg(${index})">Sil</button></td>
+      </tr>`;
+    }).join("");
+  }
+
+  const totalEmissions = legs.reduce((sum, leg) => sum + leg.emissionsKgCO2e, 0);
+  const totalTkm = legs.reduce((sum, leg) => sum + leg.tonneKm, 0);
+
+  $("totalEmissions").textContent = fmt(totalEmissions) + " kg";
+  $("totalTkm").textContent = fmt(totalTkm) + " tkm";
+  $("legCount").textContent = String(legs.length);
+}
+
+function removeLeg(index) {
+  legs.splice(index, 1);
+  render();
+}
+
+function clearLegs() {
+  if (!confirm("Tüm taşıma bacakları silinsin mi?")) return;
+  legs = [];
+  render();
+}
+
+function saveData() {
+  try {
+    const data = {
+      application: "UCarbon Transport",
+      version: "0.1-prototype",
+      shipment: {
+        shipmentId: $("shipmentId").value,
+        cargoName: $("cargoName").value,
+        reportDate: $("reportDate").value,
+        company: $("company").value
+      },
+      legs
+    };
+
+    localStorage.setItem("ucarbonTransportData", JSON.stringify(data));
+    alert("Veriler bu tarayıcıya kaydedildi.");
+  } catch (error) {
+    alert("Tarayıcı kaydı yapılamadı. JSON dışa aktarmayı deneyebilirsin.");
+  }
+}
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem("ucarbonTransportData");
+    if (!raw) {
+      alert("Bu tarayıcıda kayıtlı veri bulunamadı.");
+      return;
+    }
+    const data = JSON.parse(raw);
+    $("shipmentId").value = data.shipment?.shipmentId || "";
+    $("cargoName").value = data.shipment?.cargoName || "";
+    $("reportDate").value = data.shipment?.reportDate || "";
+    $("company").value = data.shipment?.company || "";
+    legs = Array.isArray(data.legs) ? data.legs : [];
+    render();
+  } catch (error) {
+    alert("Kayıt okunamadı.");
+  }
+}
+
+function downloadFile(filename, content, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportJSON() {
+  const data = {
+    application: "UCarbon Transport",
+    version: "0.1-prototype",
+    exportedAt: new Date().toISOString(),
+    shipment: {
+      shipmentId: $("shipmentId").value,
+      cargoName: $("cargoName").value,
+      reportDate: $("reportDate").value,
+      company: $("company").value
+    },
+    legs,
+    totals: {
+      emissionsKgCO2e: legs.reduce((s, x) => s + x.emissionsKgCO2e, 0),
+      tonneKm: legs.reduce((s, x) => s + x.tonneKm, 0)
+    },
+    disclaimer: "Prototype results; factor and methodology validation required."
+  };
+
+  downloadFile(
+    "ucarbon-transport.json",
+    JSON.stringify(data, null, 2),
+    "application/json;charset=utf-8"
+  );
+}
+
+function exportCSV() {
+  const headers = [
+    "Sevkiyat", "Bacak", "Taşıma modu", "Çıkış", "Varış",
+    "Yük (ton)", "Mesafe (km)", "Mesafe kaynağı", "Mesafe niteliği",
+    "Aktivite (tkm)", "Faktör", "Faktör birimi", "Sınır",
+    "Faktör kaynağı", "Faktör durumu", "Emisyon (kg CO2e)"
+  ];
+
+  const rows = legs.map(x => [
+    x.shipmentId, x.legId, x.modeLabel, x.origin, x.destination,
+    x.cargoMassTonnes, x.distanceKm, x.distanceSource, x.distanceType,
+    x.tonneKm, x.factorValue, x.factorUnit, x.boundary,
+    x.factorSource, x.factorStatus, x.emissionsKgCO2e
+  ]);
+
+  const csv = [headers, ...rows]
+    .map(row => row.map(value =>
+      '"' + String(value ?? "").replace(/"/g, '""') + '"'
+    ).join(";"))
+    .join("\r\n");
+
+  downloadFile(
+    "ucarbon-transport.csv",
+    "\uFEFF" + csv,
+    "text/csv;charset=utf-8"
+  );
+}
+
+function fmt(value) {
+  return Number(value).toLocaleString("tr-TR", {
+    maximumFractionDigits: 3
+  });
+}
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
+render();
+</script>
+</body>
+</html>
