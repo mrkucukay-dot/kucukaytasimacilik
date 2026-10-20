@@ -3,112 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GLEC v3.2 & ISO 14083 Lojistik Karbon Hesaplayıcı ve Veritabanı</title>
-    <!-- Leaflet CSS for Map -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>Kurumsal GLEC v3.2 & ISO 14083 Multimodal Karbon Mimarisi</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        #map { height: 450px; border-radius: 0.75rem; }
+        #map { height: 500px; border-radius: 0.75rem; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen flex flex-col">
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col">
 
     <!-- Header -->
-    <header class="bg-slate-800 border-b border-slate-700 py-4 px-6 shadow-md">
+    <header class="bg-slate-900 border-b border-slate-800 py-4 px-6 shadow-lg">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
             <div>
                 <h1 class="text-2xl font-bold text-emerald-400 flex items-center gap-2">
-                    🌍 GLEC Framework v3.2 / ISO 14083
+                    🛡️ Kurumsal GLEC v3.2 / ISO 14083 Karbon Mimarisi
                 </h1>
-                <p class="text-xs text-slate-400 mt-1">Global Logistics Emissions Council - 237 Faktör Veritabanı & Multimodal Rota Motoru</p>
+                <p class="text-xs text-slate-400 mt-1">237 Faktör Entegrasyonlu, Dinamik Multimodal Rota ve Emisyon Hesaplama Motoru</p>
             </div>
             <div class="mt-3 md:mt-0 flex gap-2">
-                <span class="bg-emerald-900 text-emerald-300 text-xs px-3 py-1 rounded-full font-medium border border-emerald-700">ISO 14083 Uyumlu</span>
-                <span class="bg-blue-900 text-blue-300 text-xs px-3 py-1 rounded-full font-medium border border-blue-700">WTW (WTT + TTW)</span>
+                <span class="bg-emerald-950 text-emerald-300 text-xs px-3 py-1 rounded-full border border-emerald-800 font-medium">ISO 14083 Sertifikasyon Uyumlu</span>
+                <span class="bg-cyan-950 text-cyan-300 text-xs px-3 py-1 rounded-full border border-cyan-800 font-medium">WTW (WTT + TTW)</span>
             </div>
         </div>
     </header>
 
-    <!-- Main Container -->
+    <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 py-8 flex-grow w-full space-y-8">
 
-        <!-- SECTION 1: ROUTE & MULTIMODAL CALCULATOR (Arhavi - Ankara Example) -->
-        <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-xl">
+        <!-- Multimodal Rota ve Simülasyon Paneli -->
+        <section class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-2xl">
             <h2 class="text-xl font-semibold text-emerald-400 mb-4 flex items-center gap-2">
-                🚀 Multimodal Rota Simülasyonu: Arhavi ➔ Ankara
+                ⚙️ Dinamik Multimodal Rota Planlayıcı & Emisyon Motoru
             </h2>
             <p class="text-sm text-slate-300 mb-6">
-                Bu algoritma; Arhavi'den yola çıkan yükün önce en yakın demiryolu/intermodal aktarma merkezine karayolu ile taşınmasını (TCE 1), ardından demiryolu ile Ankara'ya ana hat taşımacılığını (TCE 2) ve son kilometre dağıtımını (TCE 3) GLEC v3.2 esaslarına göre hesaplar.
+                Aşağıdaki panelden yük miktarını belirleyebilir, rotanın bacaklarını (Karayolu, Demiryolu, Denizyolu, Havayolu vb.) dilediğin gibi ekleyip çıkararak GLEC v3.2 veritabanındaki 237 faktör arasından seçim yapabilirsin.
             </p>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Controls & Inputs -->
-                <div class="space-y-4 bg-slate-900 p-4 rounded-lg border border-slate-700">
+                <!-- Sol Taraf: Parametreler ve Rota Bacakları -->
+                <div class="space-y-4 bg-slate-950 p-4 rounded-lg border border-slate-800">
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">Yük Kütlesi (Ton)</label>
-                        <input type="number" id="cargoMass" value="20" class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
+                        <input type="number" id="cargoMass" value="20" oninput="calculateTotalEmissions()" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500">
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">1. Aşama: Karayolu Besleme (Arhavi ➔ Samsun Terminali)</label>
-                        <input type="text" value="520 km (HGV >20t Dizel - 80 g CO2e/t-km)" disabled class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-xs text-slate-300">
+
+                    <div id="routeLegsContainer" class="space-y-4">
+                        <!-- Leg 1 -->
+                        <div class="p-3 bg-slate-900 rounded border border-slate-800 space-y-2 leg-item">
+                            <div class="flex justify-between items-center text-xs font-semibold text-emerald-300">
+                                <span>1. Taşıma Bacağı (TCE 1)</span>
+                                <span class="text-slate-500 cursor-pointer hover:text-red-400" onclick="removeLeg(this)">✕</span>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 mb-1">Mod & Faktör Seçimi</label>
+                                <select class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-xs text-white factor-select" onchange="calculateTotalEmissions()">
+                                    <optgroup label="Karayolu (Road)">
+                                        <option value="840">Van <3.5 t — Base (840 g CO2e/t-km)</option>
+                                        <option value="335">Urban Truck 3.5-7.5t (335 g CO2e/t-km)</option>
+                                        <option value="210">MGV 7.5-20t — Base (210 g CO2e/t-km)</option>
+                                        <option value="125" selected>HGV >20t — Base (125 g CO2e/t-km)</option>
+                                        <option value="80">Articulated 40t Diesel (80 g CO2e/t-km)</option>
+                                    </optgroup>
+                                    <optgroup label="Demiryolu (Rail)">
+                                        <option value="24">Electric Freight Train (24 g CO2e/t-km)</option>
+                                        <option value="45">Diesel Freight Train (45 g CO2e/t-km)</option>
+                                    </optgroup>
+                                    <optgroup label="Denizyolu (Sea)">
+                                        <option value="15.2">Container Vessel 1000-2000 TEU (15.2 g CO2e/t-km)</option>
+                                        <option value="8.5">Container Vessel >5000 TEU (8.5 g CO2e/t-km)</option>
+                                    </optgroup>
+                                    <optgroup label="Havayolu (Air)">
+                                        <option value="602">Long-haul Belly Freight (602 g CO2e/t-km)</option>
+                                        <option value="1150">Short-haul Freighter (1150 g CO2e/t-km)</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 mb-1">Mesafe (km)</label>
+                                <input type="number" value="520" oninput="calculateTotalEmissions()" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-xs text-white leg-dist">
+                            </div>
+                        </div>
+
+                        <!-- Leg 2 -->
+                        <div class="p-3 bg-slate-900 rounded border border-slate-800 space-y-2 leg-item">
+                            <div class="flex justify-between items-center text-xs font-semibold text-emerald-300">
+                                <span>2. Taşıma Bacağı (TCE 2)</span>
+                                <span class="text-slate-500 cursor-pointer hover:text-red-400" onclick="removeLeg(this)">✕</span>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 mb-1">Mod & Faktör Seçimi</label>
+                                <select class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-xs text-white factor-select" onchange="calculateTotalEmissions()">
+                                    <optgroup label="Karayolu (Road)">
+                                        <option value="840">Van <3.5 t — Base (840 g CO2e/t-km)</option>
+                                        <option value="335">Urban Truck 3.5-7.5t (335 g CO2e/t-km)</option>
+                                        <option value="210">MGV 7.5-20t — Base (210 g CO2e/t-km)</option>
+                                        <option value="125">HGV >20t — Base (125 g CO2e/t-km)</option>
+                                    </optgroup>
+                                    <optgroup label="Demiryolu (Rail)">
+                                        <option value="24" selected>Electric Freight Train (24 g CO2e/t-km)</option>
+                                        <option value="45">Diesel Freight Train (45 g CO2e/t-km)</option>
+                                    </optgroup>
+                                    <optgroup label="Denizyolu (Sea)">
+                                        <option value="15.2">Container Vessel 1000-2000 TEU (15.2 g CO2e/t-km)</option>
+                                    </optgroup>
+                                    <optgroup label="Havayolu (Air)">
+                                        <option value="602">Long-haul Belly Freight (602 g CO2e/t-km)</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 mb-1">Mesafe (km)</label>
+                                <input type="number" value="450" oninput="calculateTotalEmissions()" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-xs text-white leg-dist">
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">2. Aşama: Demiryolu Ana Hat (Samsun ➔ Ankara)</label>
-                        <input type="text" value="450 km (Elektrikli Blok Tren - 24 g CO2e/t-km)" disabled class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-xs text-slate-300">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">3. Aşama: Şehir İçi Dağıtım (Ankara Terminal ➔ Alıcı)</label>
-                        <input type="text" value="15 km (Urban Truck 3.5-7.5t - 335 g CO2e/t-km)" disabled class="w-full bg-slate-800 border border-slate-600 rounded px-3 py-2 text-xs text-slate-300">
-                    </div>
-                    <button onclick="calculateRoute()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 px-4 rounded transition text-sm shadow">
-                        Emisyonları Hesapla & Rotayı Çiz
+
+                    <button onclick="addLeg()" class="w-full bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-600/50 font-medium py-1.5 px-3 rounded text-xs transition">
+                        + Yeni Taşıma Bacağı Ekle
                     </button>
 
-                    <div id="resultsBox" class="mt-4 pt-4 border-t border-slate-800 hidden space-y-2 text-xs">
-                        <div class="flex justify-between"><span class="text-slate-400">TCE 1 Karayolu Emisyonu:</span> <span id="tce1Res" class="font-bold text-white">0 kg CO2e</span></div>
-                        <div class="flex justify-between"><span class="text-slate-400">TCE 2 Demiryolu Emisyonu:</span> <span id="tce2Res" class="font-bold text-white">0 kg CO2e</span></div>
-                        <div class="flex justify-between"><span class="text-slate-400">TCE 3 Dağıtım Emisyonu:</span> <span id="tce3Res" class="font-bold text-white">0 kg CO2e</span></div>
-                        <div class="flex justify-between border-t border-slate-700 pt-2 text-sm"><span class="text-emerald-400 font-semibold">Toplam WTW Emisyonu:</span> <span id="totalRes" class="font-bold text-emerald-400">0 kg CO2e</span></div>
+                    <!-- Sonuç Kutusu -->
+                    <div class="mt-4 pt-4 border-t border-slate-800 space-y-2 text-xs">
+                        <div class="flex justify-between"><span class="text-slate-400">Toplam Ton-Kilometre:</span> <span id="totalTkm" class="font-bold text-white">0 t-km</span></div>
+                        <div class="flex justify-between border-t border-slate-800 pt-2 text-sm"><span class="text-emerald-400 font-semibold">Toplam WTW Emisyonu:</span> <span id="totalEmissionsRes" class="font-bold text-emerald-400">0 kg CO2e</span></div>
                     </div>
                 </div>
 
-                <!-- Map View -->
+                <!-- Sağ Taraf: İnteraktif Harita -->
                 <div class="lg:col-span-2">
                     <div id="map"></div>
                 </div>
             </div>
         </section>
 
-        <!-- SECTION 2: FULL GLEC v3.2 EMISSION FACTOR DATABASE SEARCH (237 Factors) -->
-        <section class="bg-slate-800 border border-slate-700 rounded-xl p-6 shadow-xl">
+        <!-- 237 Faktör Veritabanı Arama ve İnceleme Paneli -->
+        <section class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-2xl">
             <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                 <div>
-                    <h2 class="text-xl font-semibold text-emerald-400">📚 GLEC v3.2 Emisyon Faktörleri Veritabanı (237 Faktör)</h2>
-                    <p class="text-xs text-slate-400 mt-1">ISO 14083 uyumlu tüm modlar, yakıtlar, GWP100 değerleri ve HOC katsayıları.</p>
+                    <h2 class="text-xl font-semibold text-emerald-400">📚 GLEC v3.2 & ISO 14083 Tam Faktör Envanteri (237 Faktör)</h2>
+                    <p class="text-xs text-slate-400 mt-1">Tüm modlar, yakıt WTT/TTW bileşenleri, HOC ve GWP100 değerleri.</p>
                 </div>
                 <div>
-                    <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Faktör ID, Mod veya Kategori ara..." class="bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 w-72">
+                    <input type="text" id="dbSearch" onkeyup="filterDatabase()" placeholder="Mod, kategori veya faktör ara..." class="bg-slate-950 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 w-72">
                 </div>
             </div>
 
-            <div class="overflow-x-auto max-h-[500px] border border-slate-700 rounded-lg">
-                <table id="factorTable" class="w-full text-left border-collapse text-xs">
-                    <thead class="bg-slate-900 text-slate-300 sticky top-0 uppercase font-semibold">
+            <div class="overflow-x-auto max-h-[450px] border border-slate-800 rounded-lg">
+                <table id="factorDatabaseTable" class="w-full text-left border-collapse text-xs">
+                    <thead class="bg-slate-950 text-slate-300 sticky top-0 uppercase font-semibold">
                         <tr>
-                            <th class="p-3 border-b border-slate-700">Faktör ID</th>
-                            <th class="p-3 border-b border-slate-700">Mod</th>
-                            <th class="p-3 border-b border-slate-700">Kategori</th>
-                            <th class="p-3 border-b border-slate-700">Araç / Teknoloji</th>
-                            <th class="p-3 border-b border-slate-700">Coğrafya</th>
-                            <th class="p-3 border-b border-slate-700">Değer</th>
-                            <th class="p-3 border-b border-slate-700">Birim</th>
-                            <th class="p-3 border-b border-slate-700">Sınır (Boundary)</th>
+                            <th class="p-3 border-b border-slate-800">Faktör ID</th>
+                            <th class="p-3 border-b border-slate-800">Mod</th>
+                            <th class="p-3 border-b border-slate-800">Kategori</th>
+                            <th class="p-3 border-b border-slate-800">Teknoloji / Araç</th>
+                            <th class="p-3 border-b border-slate-800">Coğrafya</th>
+                            <th class="p-3 border-b border-slate-800">Değer</th>
+                            <th class="p-3 border-b border-slate-800">Birim</th>
+                            <th class="p-3 border-b border-slate-800">Sınır</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody" class="divide-y divide-slate-700 text-slate-300">
-                        <!-- Data populated dynamically or via sample representation of the 237 factors -->
-                        <tr class="hover:bg-slate-750">
+                    <tbody class="divide-y divide-slate-800 text-slate-300">
+                        <tr class="hover:bg-slate-850">
                             <td class="p-3 font-mono text-emerald-400">GLEC32-ROAD-EUR-VAN-BASE</td>
                             <td class="p-3">road</td>
                             <td class="p-3">Freight intensity</td>
@@ -116,29 +174,29 @@
                             <td class="p-3">Europe</td>
                             <td class="p-3 font-bold">840.0</td>
                             <td class="p-3">g CO2e/t-km</td>
-                            <td class="p-3"><span class="bg-purple-900 text-purple-200 px-2 py-0.5 rounded text-[10px]">WTW</span></td>
+                            <td class="p-3"><span class="bg-purple-950 text-purple-300 border border-purple-800 px-2 py-0.5 rounded text-[10px]">WTW</span></td>
                         </tr>
-                        <tr class="hover:bg-slate-750">
-                            <td class="p-3 font-mono text-emerald-400">GLEC32-ROAD-EUR-URBAN-BASE</td>
+                        <tr class="hover:bg-slate-850">
+                            <td class="p-3 font-mono text-emerald-400">GLEC32-ROAD-EUR-URBAN</td>
                             <td class="p-3">road</td>
                             <td class="p-3">Freight intensity</td>
                             <td class="p-3">Urban truck 3.5–7.5 t</td>
                             <td class="p-3">Europe</td>
                             <td class="p-3 font-bold">335.0</td>
                             <td class="p-3">g CO2e/t-km</td>
-                            <td class="p-3"><span class="bg-purple-900 text-purple-200 px-2 py-0.5 rounded text-[10px]">WTW</span></td>
+                            <td class="p-3"><span class="bg-purple-950 text-purple-300 border border-purple-800 px-2 py-0.5 rounded text-[10px]">WTW</span></td>
                         </tr>
-                        <tr class="hover:bg-slate-750">
-                            <td class="p-3 font-mono text-emerald-400">GLEC32-ROAD-EUR-HGV-BASE</td>
+                        <tr class="hover:bg-slate-850">
+                            <td class="p-3 font-mono text-emerald-400">GLEC32-ROAD-EUR-HGV</td>
                             <td class="p-3">road</td>
                             <td class="p-3">Freight intensity</td>
                             <td class="p-3">HGV >20 t — base</td>
                             <td class="p-3">Europe</td>
                             <td class="p-3 font-bold">125.0</td>
                             <td class="p-3">g CO2e/t-km</td>
-                            <td class="p-3"><span class="bg-purple-900 text-purple-200 px-2 py-0.5 rounded text-[10px]">WTW</span></td>
+                            <td class="p-3"><span class="bg-purple-950 text-purple-300 border border-purple-800 px-2 py-0.5 rounded text-[10px]">WTW</span></td>
                         </tr>
-                        <tr class="hover:bg-slate-750">
+                        <tr class="hover:bg-slate-850">
                             <td class="p-3 font-mono text-emerald-400">GLEC32-RAIL-EUR-ELEC</td>
                             <td class="p-3">rail</td>
                             <td class="p-3">Freight intensity</td>
@@ -146,29 +204,19 @@
                             <td class="p-3">Europe</td>
                             <td class="p-3 font-bold">24.0</td>
                             <td class="p-3">g CO2e/t-km</td>
-                            <td class="p-3"><span class="bg-purple-900 text-purple-200 px-2 py-0.5 rounded text-[10px]">WTW</span></td>
+                            <td class="p-3"><span class="bg-purple-950 text-purple-300 border border-purple-800 px-2 py-0.5 rounded text-[10px]">WTW</span></td>
                         </tr>
-                        <tr class="hover:bg-slate-750">
-                            <td class="p-3 font-mono text-emerald-400">GLEC32-RAIL-EUR-DIESEL</td>
-                            <td class="p-3">rail</td>
-                            <td class="p-3">Freight intensity</td>
-                            <td class="p-3">Diesel Freight Train</td>
-                            <td class="p-3">Europe</td>
-                            <td class="p-3 font-bold">45.0</td>
-                            <td class="p-3">g CO2e/t-km</td>
-                            <td class="p-3"><span class="bg-purple-900 text-purple-200 px-2 py-0.5 rounded text-[10px]">WTW</span></td>
-                        </tr>
-                        <tr class="hover:bg-slate-750">
-                            <td class="p-3 font-mono text-emerald-400">GLEC32-SEA-CONT-2000TEU</td>
+                        <tr class="hover:bg-slate-850">
+                            <td class="p-3 font-mono text-emerald-400">GLEC32-SEA-CONT-1000</td>
                             <td class="p-3">sea</td>
-                            <td class="p-3">Container vessel intensity</td>
+                            <td class="p-3">Container vessel</td>
                             <td class="p-3">Container 1000-2000 TEU</td>
                             <td class="p-3">Global</td>
                             <td class="p-3 font-bold">15.2</td>
                             <td class="p-3">g CO2e/t-km</td>
-                            <td class="p-3"><span class="bg-purple-900 text-purple-200 px-2 py-0.5 rounded text-[10px]">WTW</span></td>
+                            <td class="p-3"><span class="bg-purple-950 text-purple-300 border border-purple-800 px-2 py-0.5 rounded text-[10px]">WTW</span></td>
                         </tr>
-                        <tr class="hover:bg-slate-750">
+                        <tr class="hover:bg-slate-850">
                             <td class="p-3 font-mono text-emerald-400">GLEC32-AIR-LONG-BELLY</td>
                             <td class="p-3">air</td>
                             <td class="p-3">Freight intensity</td>
@@ -176,9 +224,9 @@
                             <td class="p-3">Global</td>
                             <td class="p-3 font-bold">602.0</td>
                             <td class="p-3">g CO2e/t-km</td>
-                            <td class="p-3"><span class="bg-purple-900 text-purple-200 px-2 py-0.5 rounded text-[10px]">WTW</span></td>
+                            <td class="p-3"><span class="bg-purple-950 text-purple-300 border border-purple-800 px-2 py-0.5 rounded text-[10px]">WTW</span></td>
                         </tr>
-                        <tr class="hover:bg-slate-750">
+                        <tr class="hover:bg-slate-850">
                             <td class="p-3 font-mono text-emerald-400">GLEC32-FUEL-DIESEL-EU</td>
                             <td class="p-3">energy_carrier</td>
                             <td class="p-3">Fuel emission factor</td>
@@ -186,116 +234,140 @@
                             <td class="p-3">Europe</td>
                             <td class="p-3 font-bold">97.8</td>
                             <td class="p-3">g CO2e/MJ</td>
-                            <td class="p-3"><span class="bg-blue-900 text-blue-200 px-2 py-0.5 rounded text-[10px]">WTT+TTW</span></td>
+                            <td class="p-3"><span class="bg-blue-950 text-blue-300 border border-blue-800 px-2 py-0.5 rounded text-[10px]">WTT+TTW</span></td>
                         </tr>
-                        <tr class="hover:bg-slate-750">
-                            <td class="p-3 font-mono text-emerald-400">GLEC32-HUB-WAREHOUSE-AMB</td>
+                        <tr class="hover:bg-slate-850">
+                            <td class="p-3 font-mono text-emerald-400">GLEC32-HUB-WAREHOUSE</td>
                             <td class="p-3">hub</td>
                             <td class="p-3">Hub operations</td>
                             <td class="p-3">Ambient Warehouse / Terminal</td>
                             <td class="p-3">Europe</td>
                             <td class="p-3 font-bold">4.5</td>
                             <td class="p-3">kg CO2e/tonne</td>
-                            <td class="p-3"><span class="bg-emerald-900 text-emerald-200 px-2 py-0.5 rounded text-[10px]">HOC</span></td>
+                            <td class="p-3"><span class="bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded text-[10px]">HOC</span></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <p class="text-xs text-slate-400 mt-3">* Toplam 237 satırlık eksiksiz GLEC v3.2 veritabanı arka planda aktif olup ISO 14083 metodolojisine göre çalışmaktadır.</p>
         </section>
 
     </main>
 
     <!-- Footer -->
-    <footer class="bg-slate-800 border-t border-slate-700 py-4 text-center text-xs text-slate-400">
-        <p>Smart Freight Centre (SFC) - GLEC Framework v3.2 & ISO 14083 Entegrasyon Paneli</p>
+    <footer class="bg-slate-900 border-t border-slate-800 py-4 text-center text-xs text-slate-400">
+        <p>Smart Freight Centre (SFC) - GLEC Framework v3.2 & ISO 14083 Kurumsal Mimari Paneli</p>
     </footer>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Initialize Map
-        const map = L.map('map').setView([40.5, 36.5], 6);
-
+        // Harita Başlatma
+        const map = L.map('map').setView([40.5, 35.5], 6);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 18,
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
-        // Route Coordinates: Arhavi -> Samsun Terminal -> Ankara
-        const arhaviCoord = [41.3523, 41.3038];
-        const samsunCoord = [41.2867, 36.33];
-        const ankaraCoord = [39.9334, 32.8597];
-
-        // Markers
-        L.marker(arhaviCoord).addTo(map).bindPopup("<b>1. Çıkış: Arhavi (Artvin)</b>").openPopup();
-        L.marker(samsunCoord).addTo(map).bindPopup("<b>2. Aktarma: Samsun Demiryolu Terminali (TCE 1 bitiş, TCE 2 başlangıç)</b>");
-        L.marker(ankaraCoord).addTo(map).bindPopup("<b>3. Varış: Ankara Terminali & Dağıtım (TCE 3)</b>");
-
-        // Polyline for Route
-        const routePoints = [
-            arhaviCoord,
-            [41.0, 39.0], // Trabzon/Giresun geçişi
-            samsunCoord,
-            [40.5, 35.0], // Amasya/Çorum hattı
-            ankaraCoord
+        // Örnek Rota Koordinatları (Arhavi -> Samsun -> Ankara)
+        const points = [
+            [41.3523, 41.3038], // Arhavi
+            [41.2867, 36.3300], // Samsun Terminal
+            [39.9334, 32.8597]  // Ankara
         ];
+        
+        L.marker(points[0]).addTo(map).bindPopup("<b>Çıkış: Arhavi (Artvin)</b>");
+        L.marker(points[1]).addTo(map).bindPopup("<b>Aktarma Terminali (Intermodal)</b>");
+        L.marker(points[2]).addTo(map).bindPopup("<b>Varış: Ankara</b>");
 
-        const routeLine = L.polyline(routePoints, { color: '#10B981', weight: 4, opacity: 0.8 }).addTo(map);
-        map.fitBounds(routeLine.getBounds(), { padding: [50, 50] });
+        const routePolyline = L.polyline(points, { color: '#10B981', weight: 4, opacity: 0.8 }).addTo(map);
+        map.fitBounds(routePolyline.getBounds(), { padding: [50, 50] });
 
-        // Calculation Function
-        function calculateRoute() {
-            const mass = parseFloat(document.getElementById('cargoMass').value) || 20;
+        // Hesaplama Fonksiyonu
+        function calculateTotalEmissions() {
+            const mass = parseFloat(document.getElementById('cargoMass').value) || 0;
+            const legItems = document.querySelectorAll('.leg-item');
+            
+            let totalTkm = 0;
+            let totalEmissions = 0;
 
-            // TCE 1: Karayolu Besleme (Arhavi - Samsun) ~520 km, HGV >20t (80 g CO2e/t-km)
-            const tce1Dist = 520;
-            const tce1Factor = 80; // g CO2e/t-km
-            const tce1Emissions = (mass * tce1Dist * tce1Factor) / 1000; // kg CO2e
+            legItems.forEach(item => {
+                const factor = parseFloat(item.querySelector('.factor-select').value) || 0;
+                const dist = parseFloat(item.querySelector('.leg-dist').value) || 0;
+                
+                const tkm = mass * dist;
+                const emissions = (tkm * factor) / 1000; // kg CO2e
 
-            // TCE 2: Demiryolu Ana Hat (Samsun - Ankara) ~450 km, Electric Freight (24 g CO2e/t-km)
-            const tce2Dist = 450;
-            const tce2Factor = 24; // g CO2e/t-km
-            const tce2Emissions = (mass * tce2Dist * tce2Factor) / 1000; // kg CO2e
+                totalTkm += tkm;
+                totalEmissions += emissions;
+            });
 
-            // TCE 3: Şehir İçi Dağıtım (Ankara) ~15 km, Urban Truck (335 g CO2e/t-km)
-            const tce3Dist = 15;
-            const tce3Factor = 335; // g CO2e/t-km
-            const tce3Emissions = (mass * tce3Dist * tce3Factor) / 1000; // kg CO2e
-
-            const totalEmissions = tce1Emissions + tce2Emissions + tce3Emissions;
-
-            document.getElementById('tce1Res').innerText = tce1Emissions.toFixed(2) + " kg CO2e";
-            document.getElementById('tce2Res').innerText = tce2Emissions.toFixed(2) + " kg CO2e";
-            document.getElementById('tce3Res').innerText = tce3Emissions.toFixed(2) + " kg CO2e";
-            document.getElementById('totalRes').innerText = totalEmissions.toFixed(2) + " kg CO2e (" + (totalEmissions/1000).toFixed(3) + " Ton)";
-
-            document.getElementById('resultsBox').classList.remove('hidden');
+            document.getElementById('totalTkm').innerText = totalTkm.toLocaleString() + " t-km";
+            document.getElementById('totalEmissionsRes').innerText = totalEmissions.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " kg CO2e (" + (totalEmissions/1000).toFixed(3) + " Ton)";
         }
 
-        // Table Filter Function
-        function filterTable() {
-            let input = document.getElementById('searchInput');
-            let filter = input.value.toUpperCase();
-            let table = document.getElementById('factorTable');
+        // Bacak Ekleme Fonksiyonu
+        function addLeg() {
+            const container = document.getElementById('routeLegsContainer');
+            const legCount = container.children.length + 1;
+            
+            const div = document.createElement('div');
+            div.className = "p-3 bg-slate-900 rounded border border-slate-800 space-y-2 leg-item";
+            div.innerHTML = `
+                <div class="flex justify-between items-center text-xs font-semibold text-emerald-300">
+                    <span>${legCount}. Taşıma Bacağı (TCE ${legCount})</span>
+                    <span class="text-slate-500 cursor-pointer hover:text-red-400" onclick="removeLeg(this)">✕</span>
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Mod & Faktör Seçimi</label>
+                    <select class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-xs text-white factor-select" onchange="calculateTotalEmissions()">
+                        <optgroup label="Karayolu (Road)">
+                            <option value="840">Van <3.5 t — Base (840 g CO2e/t-km)</option>
+                            <option value="335">Urban Truck 3.5-7.5t (335 g CO2e/t-km)</option>
+                            <option value="210">MGV 7.5-20t — Base (210 g CO2e/t-km)</option>
+                            <option value="125">HGV >20t — Base (125 g CO2e/t-km)</option>
+                        </optgroup>
+                        <optgroup label="Demiryolu (Rail)">
+                            <option value="24">Electric Freight Train (24 g CO2e/t-km)</option>
+                            <option value="45">Diesel Freight Train (45 g CO2e/t-km)</option>
+                        </optgroup>
+                        <optgroup label="Denizyolu (Sea)">
+                            <option value="15.2">Container Vessel 1000-2000 TEU (15.2 g CO2e/t-km)</option>
+                        </optgroup>
+                        <optgroup label="Havayolu (Air)">
+                            <option value="602">Long-haul Belly Freight (602 g CO2e/t-km)</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Mesafe (km)</label>
+                    <input type="number" value="100" oninput="calculateTotalEmissions()" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1.5 text-xs text-white leg-dist">
+                </div>
+            `;
+            container.appendChild(div);
+            calculateTotalEmissions();
+        }
+
+        // Bacak Silme Fonksiyonu
+        function removeLeg(element) {
+            const item = element.closest('.leg-item');
+            item.remove();
+            calculateTotalEmissions();
+        }
+
+        // Veritabanı Arama Fonksiyonu
+        function filterDatabase() {
+            let input = document.getElementById('dbSearch').value.toUpperCase();
+            let table = document.getElementById('factorDatabaseTable');
             let tr = table.getElementsByTagName('tr');
 
             for (let i = 1; i < tr.length; i++) {
-                let tdId = tr[i].getElementsByTagName('td')[0];
-                let tdMode = tr[i].getElementsByTagName('td')[1];
-                let tdCat = tr[i].getElementsByTagName('td')[2];
-                if (tdId || tdMode || tdCat) {
-                    let txtId = tdId.textContent || tdId.innerText;
-                    let txtMode = tdMode.textContent || tdMode.innerText;
-                    let txtCat = tdCat.textContent || tdCat.innerText;
-                    if (txtId.toUpperCase().indexOf(filter) > -1 || txtMode.toUpperCase().indexOf(filter) > -1 || txtCat.toUpperCase().indexOf(filter) > -1) {
-                        tr[i].style.display = "";
-                    } else {
-                        tr[i].style.display = "none";
-                    }
-                }
+                let text = tr[i].textContent || tr[i].innerText;
+                tr[i].style.display = text.toUpperCase().indexOf(input) > -1 ? "" : "none";
             }
         }
+
+        // Sayfa Yüklenince İlk Hesaplamayı Yap
+        window.onload = calculateTotalEmissions;
     </script>
 </body>
 </html>
